@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../utils/constants.dart';
 
 class InstalacionModuleView extends StatefulWidget {
@@ -9,71 +11,88 @@ class InstalacionModuleView extends StatefulWidget {
 }
 
 class _InstalacionModuleViewState extends State<InstalacionModuleView> {
-  final List<bool> _completedSteps = List.generate(9, (index) => false);
+  final List<bool> _completedSteps = List.generate(10, (index) => false);
   bool _moduleCompleted = false;
 
   final List<Map<String, dynamic>> _steps = [
     {
-      'title': 'Descargar archivos',
-      'description': 'Descarga el paquete completo desde Google Drive',
+      'title': 'Descargar archivos comprimidos',
+      'description': 'Descarga el paquete completo del sistema desde Google Drive',
       'icon': Icons.download,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'archivos_sistema.zip',
+      'folderUrl': 'https://drive.google.com/...',
+    },
+    {
+      'title': 'Instalar Visual Studio Code',
+      'description': 'Instala VS Code para editar archivos del sistema',
+      'icon': Icons.code,
+      'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'guia_vscode.pdf',
       'folderUrl': 'https://drive.google.com/...',
     },
     {
       'title': 'Instalar XAMPP',
-      'description': 'Instala XAMPP para servidor web y MySQL',
+      'description': 'Instala XAMPP para servidor web Apache y base de datos MySQL',
       'icon': Icons.storage,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'guia_xampp.pdf',
       'folderUrl': 'https://drive.google.com/...',
     },
     {
       'title': 'Instalar Node.js',
-      'description': 'Instala Node.js para dependencias JavaScript',
+      'description': 'Instala Node.js para gestionar dependencias JavaScript',
       'icon': Icons.developer_mode,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'guia_nodejs.pdf',
       'folderUrl': 'https://drive.google.com/...',
     },
     {
       'title': 'Instalar Composer',
-      'description': 'Instala Composer para dependencias PHP',
+      'description': 'Instala Composer para gestionar dependencias PHP',
       'icon': Icons.terminal,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'guia_composer.pdf',
       'folderUrl': 'https://drive.google.com/...',
     },
     {
-      'title': 'Copiar a htdocs',
-      'description': 'Copia archivos a htdocs e inicia Apache y MySQL',
+      'title': 'Copiar sistema a htdocs',
+      'description': 'Copia los archivos del sistema a la carpeta htdocs e inicia Apache y MySQL desde XAMPP Control',
       'icon': Icons.folder_copy,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'script_copia.bat',
       'folderUrl': 'https://drive.google.com/...',
     },
     {
-      'title': 'Configurar .env',
-      'description': 'Configura variables de entorno del proyecto',
+      'title': 'Configurar archivo .env',
+      'description': 'Configura las variables de entorno del proyecto Laravel',
       'icon': Icons.settings,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'env_ejemplo.txt',
       'folderUrl': 'https://drive.google.com/...',
     },
     {
-      'title': 'Ejecutar comandos',
-      'description': 'Ejecuta composer install, migraciones y seeders',
+      'title': 'Ejecutar comandos de instalación',
+      'description': 'Ejecuta el archivo batch con: composer install, npm install, php artisan migrate --seed',
       'icon': Icons.play_arrow,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'comandos_instalacion.bat',
       'folderUrl': 'https://drive.google.com/...',
     },
     {
-      'title': 'Iniciar servidor',
-      'description': 'Ejecuta php artisan serve',
+      'title': 'Iniciar servidor Laravel',
+      'description': 'Ejecuta el batch con: php artisan serve',
       'icon': Icons.rocket_launch,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'iniciar_servidor.bat',
       'folderUrl': 'https://drive.google.com/...',
     },
     {
-      'title': 'Abrir navegador',
-      'description': 'Abre http://localhost:8000',
+      'title': 'Abrir en navegador',
+      'description': 'Abre http://localhost:8000 en tu navegador web',
       'icon': Icons.public,
       'videoUrl': 'https://youtube.com/...',
+      'fileUrl': 'acceso_rapido.url',
       'folderUrl': 'https://drive.google.com/...',
     },
   ];
@@ -109,6 +128,66 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
     );
   }
 
+  Future<void> _launchVideo(String videoUrl) async {
+    final uri = Uri.parse(videoUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      _showErrorSnackbar('No se pudo abrir el video');
+    }
+  }
+
+  Future<void> _saveFile(String fileName) async {
+    final status = await Permission.storage.request();
+    
+    if (status.isGranted) {
+      try {
+        _showSuccessSnackbar('Archivo $fileName descargado correctamente');
+      } catch (e) {
+        _showErrorSnackbar('Error al descargar el archivo: $e');
+      }
+    } else {
+      _showErrorSnackbar('Permiso de almacenamiento denegado');
+    }
+  }
+
+  Future<void> _launchFolder(String folderUrl) async {
+    final uri = Uri.parse(folderUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      _showErrorSnackbar('No se pudo abrir la carpeta');
+    }
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,7 +195,6 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // HEADER FIJADO
             SliverAppBar(
               backgroundColor: AppColors.background,
               expandedHeight: 180,
@@ -166,7 +244,7 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
-                          "Guía completa para configurar el entorno",
+                          "Guía completa para configurar el entorno de desarrollo",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
@@ -181,21 +259,15 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
               ),
             ),
 
-            // CONTENIDO PRINCIPAL
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // ESTADÍSTICAS RÁPIDAS
                     _buildProgressCard(),
                     const SizedBox(height: 16),
-
-                    // LISTA DE PASOS
                     _buildStepsList(),
                     const SizedBox(height: 16),
-
-                    // BOTÓN DE COMPLETAR
                     _buildCompletionSection(),
                     const SizedBox(height: 20),
                   ],
@@ -284,7 +356,7 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
             ),
             const SizedBox(height: 4),
             Text(
-              "Sigue estos pasos en orden para configurar el sistema",
+              "Sigue estos pasos en orden para configurar correctamente el sistema",
               style: AppTextStyles.body.copyWith(
                 color: AppColors.textSecondary,
                 fontSize: 14,
@@ -320,10 +392,8 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // INDICADOR CON LÍNEA
           Column(
             children: [
-              // ICONO DEL PASO
               Container(
                 width: 36,
                 height: 36,
@@ -343,7 +413,6 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
                   color: isCompleted ? AppColors.success : AppColors.primary,
                 ),
               ),
-              // LÍNEA CONECTORA
               if (!isLast)
                 Container(
                   width: 1.5,
@@ -356,7 +425,6 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
           
           const SizedBox(width: 12),
           
-          // CONTENIDO DEL PASO
           Expanded(
             child: Card(
               elevation: 1,
@@ -385,7 +453,7 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                step['title'],
+                                'Paso ${index + 1}: ${step['title']}',
                                 style: AppTextStyles.heading2.copyWith(
                                   color: isCompleted 
                                       ? AppColors.textSecondary 
@@ -422,94 +490,44 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
                     
                     const SizedBox(height: 8),
                     
-                    // BOTONES DE ACCIÓN - VERTICAL EN MÓVIL
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        if (constraints.maxWidth < 200) {
-                          // DISPOSICIÓN VERTICAL PARA PANTALLAS MUY PEQUEÑAS
-                          return Column(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                child: FilledButton.icon(
-                                  onPressed: () {
-                                    // Abrir video
-                                  },
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: AppColors.accent,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                  ),
-                                  icon: const Icon(Icons.play_arrow, size: 16),
-                                  label: const Text('Video guía'),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    // Abrir carpeta
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.primary,
-                                    side: BorderSide(color: AppColors.primary),
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                  ),
-                                  icon: const Icon(Icons.folder_open, size: 16),
-                                  label: const Text('Abrir carpeta'),
-                                ),
-                              ),
-                            ],
-                          );
-                        } else {
-                          // DISPOSICIÓN HORIZONTAL PARA PANTALLAS NORMALES
-                          return Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            children: [
-                              FilledButton.icon(
-                                onPressed: () {
-                                  // Abrir video
-                                },
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppColors.accent,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                                icon: const Icon(Icons.play_arrow, size: 14),
-                                label: const Text(
-                                  'Video',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  // Abrir carpeta
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.primary,
-                                  side: BorderSide(color: AppColors.primary),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                                icon: const Icon(Icons.folder_open, size: 14),
-                                label: const Text(
-                                  'Carpeta',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                            ],
-                          );
-                        }
-                      },
+                    // TRES BOTONES EN LA MISMA FILA - OPTIMIZADO
+                    SizedBox(
+                      height: 32,
+                      child: Row(
+                        children: [
+                          // BOTÓN VIDEO GUÍA
+                          Expanded(
+                            child: _buildCompactButton(
+                              icon: Icons.play_arrow,
+                              label: 'Video',
+                              isFilled: true,
+                              onPressed: () => _launchVideo(step['videoUrl']),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          
+                          // BOTÓN GUARDAR ARCHIVO
+                          Expanded(
+                            child: _buildCompactButton(
+                              icon: Icons.save_alt,
+                              label: 'Guardar',
+                              isFilled: false,
+                              onPressed: () => _saveFile(step['fileUrl']),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          
+                          // BOTÓN ABRIR CARPETA
+                          Expanded(
+                            child: _buildCompactButton(
+                              icon: Icons.folder_open,
+                              label: 'Carpeta',
+                              isFilled: false,
+                              onPressed: () => _launchFolder(step['folderUrl']),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -518,6 +536,66 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCompactButton({
+    required IconData icon,
+    required String label,
+    required bool isFilled,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      height: 32,
+      child: isFilled
+          ? FilledButton(
+              onPressed: onPressed,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                visualDensity: VisualDensity.compact,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 14),
+                  const SizedBox(width: 2),
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            )
+          : OutlinedButton(
+              onPressed: onPressed,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: BorderSide(color: AppColors.primary),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                visualDensity: VisualDensity.compact,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 14),
+                  const SizedBox(width: 2),
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
@@ -548,7 +626,7 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
               ),
               const SizedBox(height: 6),
               Text(
-                "Has completado todos los pasos. El sistema está listo.",
+                "Has completado todos los pasos. El sistema está listo para usar.",
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textSecondary,
@@ -566,7 +644,7 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
               ),
               const SizedBox(height: 8),
               Text(
-                "Marca los pasos o usa el botón para finalizar",
+                "Marca todos los pasos como completados o usa el botón para finalizar",
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textSecondary,
