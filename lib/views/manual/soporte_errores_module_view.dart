@@ -826,37 +826,48 @@ class _SoporteErroresModuleViewState extends State<SoporteErroresModuleView> {
     return Container(
       width: 150,
       child: Card(
-        elevation: 1,
+        elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: AppColors.accent.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: AppColors.primary.withOpacity(0.1)),
         ),
-        color: AppColors.accent.withOpacity(0.05),
+        color: Colors.white,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.lightbulb_outline,
-                size: 20,
-                color: AppColors.accent,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.lightbulb_outline,
+                  size: 20,
+                  color: AppColors.accent,
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
                 tip['tip'],
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: 14,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Text(
                 tip['description'],
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textSecondary,
-                  fontSize: 11,
+                  fontSize: 12,
+                  height: 1.4,
                 ),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,

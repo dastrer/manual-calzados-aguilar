@@ -11,7 +11,7 @@ class InstalacionModuleView extends StatefulWidget {
 }
 
 class _InstalacionModuleViewState extends State<InstalacionModuleView> {
-  final List<bool> _completedSteps = List.generate(10, (index) => false);
+  final List<bool> _completedSteps = List.generate(6, (index) => false);
   bool _moduleCompleted = false;
 
   final List<Map<String, dynamic>> _steps = [
@@ -61,38 +61,6 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
       'icon': Icons.folder_copy,
       'videoUrl': 'https://youtube.com/...',
       'fileUrl': 'script_copia.bat',
-      'folderUrl': 'https://drive.google.com/...',
-    },
-    {
-      'title': 'Configurar archivo .env',
-      'description': 'Configura las variables de entorno del proyecto Laravel',
-      'icon': Icons.settings,
-      'videoUrl': 'https://youtube.com/...',
-      'fileUrl': 'env_ejemplo.txt',
-      'folderUrl': 'https://drive.google.com/...',
-    },
-    {
-      'title': 'Ejecutar comandos de instalación',
-      'description': 'Ejecuta el archivo batch con: composer install, npm install, php artisan migrate --seed',
-      'icon': Icons.play_arrow,
-      'videoUrl': 'https://youtube.com/...',
-      'fileUrl': 'comandos_instalacion.bat',
-      'folderUrl': 'https://drive.google.com/...',
-    },
-    {
-      'title': 'Iniciar servidor Laravel',
-      'description': 'Ejecuta el batch con: php artisan serve',
-      'icon': Icons.rocket_launch,
-      'videoUrl': 'https://youtube.com/...',
-      'fileUrl': 'iniciar_servidor.bat',
-      'folderUrl': 'https://drive.google.com/...',
-    },
-    {
-      'title': 'Abrir en navegador',
-      'description': 'Abre http://localhost:8000 en tu navegador web',
-      'icon': Icons.public,
-      'videoUrl': 'https://youtube.com/...',
-      'fileUrl': 'acceso_rapido.url',
       'folderUrl': 'https://drive.google.com/...',
     },
   ];
@@ -626,7 +594,7 @@ class _InstalacionModuleViewState extends State<InstalacionModuleView> {
               ),
               const SizedBox(height: 6),
               Text(
-                "Has completado todos los pasos. El sistema está listo para usar.",
+                "Has completado la instalación del entorno. Continúa con la configuración inicial.",
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.textSecondary,
