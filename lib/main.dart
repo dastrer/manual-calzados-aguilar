@@ -81,14 +81,24 @@ class _RootState extends State<Root> {
   bool _loggedIn = false;
 
   void _handleLoggedIn() {
+    // 🔁 Cada vez que se loguea, reiniciamos el Dashboard
+    final dashboardVM = context.read<DashboardViewModel>();
+    dashboardVM.restart();
+
     setState(() => _loggedIn = true);
+  }
+
+  void _handleLogout() {
+    setState(() => _loggedIn = false);
   }
 
   @override
   Widget build(BuildContext context) {
     // 👟 PRIMERO MUESTRA LOGIN, LUEGO DASHBOARD
     return _loggedIn
-        ? const dash.DashboardScreen()
+        ? dash.DashboardScreen(
+            onLogout: _handleLogout,
+          )
         : auth.LoginScreen(
             onLoggedIn: _handleLoggedIn,
           );

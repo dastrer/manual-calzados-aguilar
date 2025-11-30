@@ -47,11 +47,11 @@ class DashboardScreen extends StatelessWidget {
 
     // VISTAS DE LOS 5 MÓDULOS
     const List<Widget> pages = [
-      IntroModuleView(),                 // 0
-      InstalacionModuleView(),           // 1
-      ConfiguracionInicialModuleView(),  // 2
-      UsoModulosModuleView(),            // 3
-      SoporteErroresModuleView(),        // 4
+      IntroModuleView(), // 0
+      InstalacionModuleView(), // 1
+      ConfiguracionInicialModuleView(), // 2
+      UsoModulosModuleView(), // 3
+      SoporteErroresModuleView(), // 4
     ];
 
     return Scaffold(
@@ -112,115 +112,217 @@ class DashboardScreen extends StatelessWidget {
   ) {
     return Drawer(
       backgroundColor: AppColors.backgroundVariant,
-      child: Column(
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.secondary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            accountName: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                usuario?.nombreCompleto ?? "Usuario Manual",
-                style: AppTextStyles.body.copyWith(color: Colors.white),
-              ),
-            ),
-
-            accountEmail: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  usuario?.correo ?? "manual@sistema.com",
-                  style: AppTextStyles.body.copyWith(color: Colors.white70),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // ====== HEADER PREMIUM ======
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.secondary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                if (usuario != null)
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Etiqueta superior
                   Text(
-                    'Rol: ${usuario.rolLabel}',
+                    'Sesión actual',
                     style: AppTextStyles.body.copyWith(
                       color: Colors.white70,
                       fontSize: 12,
                     ),
                   ),
-              ],
-            ),
-            currentAccountPicture: CircleAvatar(
-              radius: 28,
-              backgroundColor: AppColors.accent,
-              child: Text(
-                // Inicial de nombre o "M" por defecto
-                (usuario != null && usuario.nombres.isNotEmpty)
-                    ? usuario.nombres[0].toUpperCase()
-                    : 'M',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                  const SizedBox(height: 10),
+
+                  // FILA: AVATAR + DATOS
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: AppColors.accent,
+                        child: Text(
+                          (usuario != null && usuario.nombres.isNotEmpty)
+                              ? usuario.nombres[0].toUpperCase()
+                              : 'M',
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // NOMBRE COMPLETO
+                            Text(
+                              usuario?.nombreCompleto ?? "Usuario Manual",
+                              style: AppTextStyles.body.copyWith(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            // CORREO
+                            Text(
+                              usuario?.correo ?? "manual@sistema.com",
+                              style: AppTextStyles.body.copyWith(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            // ROL (SI EXISTE)
+                            if (usuario != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.4),
+                                    width: 0.7,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.verified_user,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Rol: ${usuario.rolLabel}',
+                                      style: AppTextStyles.body.copyWith(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // NOMBRE DEL SISTEMA (BADGE)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Selecciona un modulo del manual',
+                      style: AppTextStyles.body.copyWith(
+                        color: Colors.white70,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
 
-          // ITEMS DEL MENÚ (UNO POR CADA MÓDULO)
-          _buildDrawerItem(
-            context,
-            Icons.menu_book,
-            "Introducción y Alcance",
-            0,
-            dashboardVM,
-          ),
-          _buildDrawerItem(
-            context,
-            Icons.download,
-            "Instalación del Sistema",
-            1,
-            dashboardVM,
-          ),
-          _buildDrawerItem(
-            context,
-            Icons.settings,
-            "Configuración Inicial",
-            2,
-            dashboardVM,
-          ),
-          _buildDrawerItem(
-            context,
-            Icons.view_module,
-            "Uso de los Módulos",
-            3,
-            dashboardVM,
-          ),
-          _buildDrawerItem(
-            context,
-            Icons.support_agent,
-            "Soporte y Errores",
-            4,
-            dashboardVM,
-          ),
-
-          const Spacer(),
-          const Divider(height: 1, color: AppColors.textSecondary),
-          ListTile(
-            leading: const Icon(Icons.logout, color: AppColors.error),
-            title: Text(
-              AppStrings.logout,
-              style: AppTextStyles.body.copyWith(color: AppColors.error),
+            // ====== OPCIONES DEL MENÚ ======
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildDrawerItem(
+                    context,
+                    Icons.menu_book,
+                    "Introducción y Alcance",
+                    0,
+                    dashboardVM,
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.download,
+                    "Instalación del Sistema",
+                    1,
+                    dashboardVM,
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.settings,
+                    "Configuración Inicial",
+                    2,
+                    dashboardVM,
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.view_module,
+                    "Uso de los Módulos",
+                    3,
+                    dashboardVM,
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.support_agent,
+                    "Soporte y Errores",
+                    4,
+                    dashboardVM,
+                  ),
+                ],
+              ),
             ),
-            onTap: () async {
-              // 1️⃣ Cierra el Drawer
-              Navigator.of(context).pop();
 
-              // 2️⃣ Limpia sesión en el ViewModel
-              await loginVM.logout();
+            const Divider(height: 1, color: AppColors.textSecondary),
 
-              // 3️⃣ Notifica al Root (main.dart) para volver al Login
-              onLogout?.call();
-            },
-          ),
-        ],
+            // ====== CERRAR SESIÓN ======
+            ListTile(
+              leading: const Icon(Icons.logout, color: AppColors.error),
+              title: Text(
+                AppStrings.logout,
+                style: AppTextStyles.body.copyWith(color: AppColors.error),
+              ),
+              onTap: () async {
+                // 1️⃣ Cierra el Drawer
+                Navigator.of(context).pop();
+
+                // 2️⃣ Limpia sesión en el ViewModel
+                await loginVM.logout();
+
+                // 3️⃣ Notifica al Root (main.dart) para volver al Login
+                onLogout?.call();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -557,18 +659,16 @@ class DashboardScreen extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            // GRADIENTE DORADO → AZUL CUANDO NO ESTÁ SELECCIONADO
             gradient: isSelected
                 ? null
                 : const LinearGradient(
                     colors: [
-                      AppColors.accent,   // Dorado
-                      AppColors.primary,  // Azul marino
+                      AppColors.accent, // Dorado
+                      AppColors.primary, // Azul marino
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-            // SOLO AZUL CUANDO ESTÁ SELECCIONADO
             color: isSelected ? AppColors.primary : null,
             boxShadow: [
               BoxShadow(
