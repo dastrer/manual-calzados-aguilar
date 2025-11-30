@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../viewmodels/dashboard_viewmodel.dart';
+import '../../viewmodels/login_viewmodel.dart';
 import '../../utils/constants.dart';
 
 // IMPORTS DE LAS VISTAS DE MÓDULOS (INDEPENDIENTES)
@@ -12,11 +13,15 @@ import '../manual/uso_modulos_module_view.dart';
 import '../manual/soporte_errores_module_view.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback? onLogout;
+
+  const DashboardScreen({super.key, this.onLogout});
 
   @override
   Widget build(BuildContext context) {
     final dashboardVM = Provider.of<DashboardViewModel>(context);
+    final loginVM = Provider.of<LoginViewModel>(context);
+    final usuario = loginVM.usuarioActual;
 
     // ================================
     // 🔄 PANTALLA DE CARGA INICIAL
@@ -27,9 +32,9 @@ class DashboardScreen extends StatelessWidget {
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
               Text(
                 'Cargando manual...',
                 style: AppTextStyles.body,
@@ -84,7 +89,7 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
       ),
-      drawer: _buildDrawer(context, dashboardVM),
+      drawer: _buildDrawer(context, dashboardVM, usuario, loginVM),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 250),
         switchInCurve: Curves.easeOut,
@@ -102,6 +107,8 @@ class DashboardScreen extends StatelessWidget {
   Drawer _buildDrawer(
     BuildContext context,
     DashboardViewModel dashboardVM,
+    UsuarioActual? usuario,
+    LoginViewModel loginVM,
   ) {
     return Drawer(
       backgroundColor: AppColors.backgroundVariant,
@@ -115,18 +122,45 @@ class DashboardScreen extends StatelessWidget {
                 end: Alignment.bottomRight,
               ),
             ),
-            accountName: Text(
-              "Usuario Manual",
-              style: AppTextStyles.body.copyWith(color: Colors.white),
+            accountName: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                usuario?.nombreCompleto ?? "Usuario Manual",
+                style: AppTextStyles.body.copyWith(color: Colors.white),
+              ),
             ),
-            accountEmail: Text(
-              "manual@sistema.com",
-              style: AppTextStyles.body.copyWith(color: Colors.white70),
+
+            accountEmail: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  usuario?.correo ?? "manual@sistema.com",
+                  style: AppTextStyles.body.copyWith(color: Colors.white70),
+                ),
+                if (usuario != null)
+                  Text(
+                    'Rol: ${usuario.rolLabel}',
+                    style: AppTextStyles.body.copyWith(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
             ),
-            currentAccountPicture: const CircleAvatar(
+            currentAccountPicture: CircleAvatar(
               radius: 28,
               backgroundColor: AppColors.accent,
-              child: Icon(Icons.menu_book, size: 40, color: Colors.white),
+              child: Text(
+                // Inicial de nombre o "M" por defecto
+                (usuario != null && usuario.nombres.isNotEmpty)
+                    ? usuario.nombres[0].toUpperCase()
+                    : 'M',
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
 
@@ -175,8 +209,15 @@ class DashboardScreen extends StatelessWidget {
               AppStrings.logout,
               style: AppTextStyles.body.copyWith(color: AppColors.error),
             ),
-            onTap: () {
-              // TODO: Implementar logout
+            onTap: () async {
+              // 1️⃣ Cierra el Drawer
+              Navigator.of(context).pop();
+
+              // 2️⃣ Limpia sesión en el ViewModel
+              await loginVM.logout();
+
+              // 3️⃣ Notifica al Root (main.dart) para volver al Login
+              onLogout?.call();
             },
           ),
         ],

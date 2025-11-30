@@ -41,9 +41,12 @@ class DatabaseHelper {
     if (!kReleaseMode) {
       try {
         await db.live(port: 8888);
+        // ignore: avoid_print
         print('✅ SQFLITE LIVE → http://localhost:8888');
+        // ignore: avoid_print
         print('💡 adb reverse tcp:8888 tcp:8888');
       } catch (e) {
+        // ignore: avoid_print
         print('⚠️ No se pudo iniciar sqflite_live: $e');
       }
     }
@@ -56,19 +59,45 @@ class DatabaseHelper {
   // ==========================================
   Future<void> _onCreate(Database db, int version) async {
     await _runDDL(db);
-    await _seedAdmin(db); // ⬅️ SEEDER AÑADIDO
+    await _seedRoles(db);  // ⬅️ PRIMERO ROLES
+    await _seedAdmin(db);  // ⬅️ LUEGO USUARIO ADMIN
   }
 
   // ==========================================
   // MIGRACIONES FUTURAS
   // ==========================================
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Aquí se manejarán migraciones futuras
+  }
 
   // ==========================================
   // REFUERZO
   // ==========================================
   Future<void> _ensureTables(Database db) async {
     await _runDDL(db);
+  }
+
+  // ==========================================
+  // SEEDER ROLES (ADMIN / EMPLEADO)
+  // ==========================================
+  Future<void> _seedRoles(Database db) async {
+    final result = await db.rawQuery("SELECT COUNT(*) as total FROM rol");
+    final count = (result.first["total"] as int?) ?? 0;
+
+    if (count == 0) {
+      await db.insert("rol", {
+        "nombre": "ADMIN",
+        "descripcion": "Administrador del sistema",
+      });
+
+      await db.insert("rol", {
+        "nombre": "EMPLEADO",
+        "descripcion": "Usuario empleado con permisos limitados",
+      });
+
+      // ignore: avoid_print
+      print("✅ Seeder: ROLES (ADMIN, EMPLEADO) creados.");
+    }
   }
 
   // ==========================================
@@ -81,7 +110,28 @@ class DatabaseHelper {
     if (count == 0) {
       final now = DateTime.now().toIso8601String();
 
+      // Buscar id del rol ADMIN
+      final rolResult = await db.query(
+        'rol',
+        where: 'UPPER(nombre) = UPPER(?)',
+        whereArgs: ['ADMIN'],
+        limit: 1,
+      );
+
+      int rolAdminId;
+
+      if (rolResult.isEmpty) {
+        // Por si acaso no existiera, lo creamos aquí
+        rolAdminId = await db.insert('rol', {
+          'nombre': 'ADMIN',
+          'descripcion': 'Administrador del sistema (auto-creado en seeder)',
+        });
+      } else {
+        rolAdminId = rolResult.first['id'] as int;
+      }
+
       await db.insert("usuario", {
+        "rol_id": rolAdminId,
         "nombre_usuario": "admin",
         "nombres": "Juan Pablo",
         "ap_paterno": "Ramirez",
@@ -94,7 +144,8 @@ class DatabaseHelper {
         "fecha_actualizacion": now,
       });
 
-      print("✅ Seeder: ADMIN creado correctamente.");
+      // ignore: avoid_print
+      print("✅ Seeder: ADMIN creado correctamente con rol ADMIN (id=$rolAdminId).");
     }
   }
 
@@ -102,10 +153,20 @@ class DatabaseHelper {
   // ESTRUCTURA DE TABLAS
   // ==========================================
   Future<void> _runDDL(Database db) async {
-    // 1. TABLA USUARIO
+    // 0. TABLA ROL
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS rol (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre      TEXT NOT NULL UNIQUE,
+        descripcion TEXT
+      );
+    ''');
+
+    // 1. TABLA USUARIO (CON rol_id COMO FK)
     await db.execute('''
       CREATE TABLE IF NOT EXISTS usuario (
         id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+        rol_id              INTEGER NOT NULL,
         nombre_usuario      TEXT NOT NULL UNIQUE,
         nombres             TEXT NOT NULL,
         ap_paterno          TEXT,
@@ -115,7 +176,11 @@ class DatabaseHelper {
         estado              TEXT NOT NULL DEFAULT 'ACTIVO',
         avatar_ruta         TEXT,
         fecha_creacion      TEXT NOT NULL,
-        fecha_actualizacion TEXT NOT NULL
+        fecha_actualizacion TEXT NOT NULL,
+        FOREIGN KEY (rol_id)
+          REFERENCES rol (id)
+          ON DELETE RESTRICT
+          ON UPDATE CASCADE
       );
     ''');
 

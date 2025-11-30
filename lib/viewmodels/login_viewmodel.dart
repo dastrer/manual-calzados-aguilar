@@ -6,6 +6,8 @@ import '../data/database_helper.dart';
 /// =======================================
 class UsuarioActual {
   final int id;
+  final int rolId;
+  final String rolNombre;
   final String nombreUsuario;
   final String nombres;
   final String apPaterno;
@@ -16,6 +18,8 @@ class UsuarioActual {
 
   const UsuarioActual({
     required this.id,
+    required this.rolId,
+    required this.rolNombre,
     required this.nombreUsuario,
     required this.nombres,
     required this.apPaterno,
@@ -25,11 +29,20 @@ class UsuarioActual {
     this.avatarRuta,
   });
 
+  /// Nombre corto, útil para saludos: "Juan Pablo Ramirez"
   String get nombreCorto => '$nombres $apPaterno'.trim();
+
+  /// Nombre completo para mostrar en el Drawer, encabezados, etc.
+  String get nombreCompleto => '$nombres $apPaterno $apMaterno'.trim();
+
+  /// Texto amigable de rol ("ADMIN", "EMPLEADO", etc.)
+  String get rolLabel => rolNombre;
 
   factory UsuarioActual.fromMap(Map<String, Object?> map) {
     return UsuarioActual(
       id: (map['id'] as int),
+      rolId: (map['rol_id'] as int),
+      rolNombre: (map['rol_nombre'] as String),
       nombreUsuario: (map['nombre_usuario'] as String),
       nombres: (map['nombres'] as String),
       apPaterno: (map['ap_paterno'] as String?) ?? '',
@@ -67,7 +80,7 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   /// =======================================
-  /// 🔑 LOGIN CONTRA LA TABLA `usuario`
+  /// 🔑 LOGIN CONTRA LA TABLA `usuario` + `rol`
   /// =======================================
   Future<bool> login() async {
     final email = emailController.text.trim();
@@ -86,12 +99,31 @@ class LoginViewModel extends ChangeNotifier {
     try {
       final db = await DatabaseHelper.instance.database;
 
-      // 🔎 BUSCAMOS POR CORREO + CONTRASEÑA + ESTADO ACTIVO (CASE-INSENSITIVE)
-      final result = await db.query(
-        'usuario',
-        where: 'correo = ? AND contrasena = ? AND UPPER(estado) = UPPER(?)',
-        whereArgs: [email, password, 'ACTIVO'],
-        limit: 1,
+      // 🔎 JOIN usuario + rol para traer también el rol del usuario
+      final result = await db.rawQuery(
+        '''
+        SELECT 
+          u.id,
+          u.rol_id,
+          r.nombre AS rol_nombre,
+          u.nombre_usuario,
+          u.nombres,
+          u.ap_paterno,
+          u.ap_materno,
+          u.correo,
+          u.contrasena,
+          u.estado,
+          u.avatar_ruta,
+          u.fecha_creacion,
+          u.fecha_actualizacion
+        FROM usuario u
+        JOIN rol r ON r.id = u.rol_id
+        WHERE u.correo = ? 
+          AND u.contrasena = ? 
+          AND UPPER(u.estado) = UPPER(?)
+        LIMIT 1
+        ''',
+        [email, password, 'ACTIVO'],
       );
 
       if (result.isEmpty) {
